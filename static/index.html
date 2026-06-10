@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeSummarizer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 210px;
+      background: #fff;
+      border-right: 1px solid #e2e8f0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.75rem;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: #2196F3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .logo h2 { font-size: 14px; font-weight: 600; color: #1a202c; }
+    .logo p  { font-size: 11px; color: #718096; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #4a5568;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.15s;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: #f7fafc; }
+    .nav-item.active { background: #ebf8ff; color: #1565C0; font-weight: 500; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #edf2f7;
+      color: #718096;
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-title { font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 4px; }
+    .page-sub   { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+
+    /* ── UPLOAD CARD ── */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 1.25rem;
+    }
+
+    .field-label { font-size: 13px; font-weight: 600; color: #2d3748; margin-bottom: 5px; }
+
+    .text-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #2d3748;
+      background: #fff;
+      outline: none;
+      margin-bottom: 1.25rem;
+      transition: border 0.15s;
+    }
+    .text-input:focus { border-color: #2196F3; }
+
+    .dropzone {
+      border: 2px dashed #bee3f8;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 1rem;
+      background: #f7fbff;
+    }
+    .dropzone:hover { border-color: #2196F3; background: #ebf8ff; }
+    .dropzone i { font-size: 30px; color: #2196F3; display: block; margin-bottom: 8px; }
+    .dropzone .drop-main { font-size: 13px; font-weight: 500; color: #2d3748; margin-bottom: 4px; }
+    .dropzone .drop-sub  { font-size: 11px; color: #718096; }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+    .file-item i { color: #2196F3; }
+    .file-size { margin-left: auto; color: #718096; font-size: 12px; }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      background: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 1rem;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #1976D2; }
+    .btn:disabled { background: #90CAF9; cursor: not-allowed; }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      color: #718096;
+      font-size: 14px;
+    }
+    .spinner i { font-size: 28px; color: #2196F3; animation: spin 1s linear infinite; display: block; margin-bottom: 10px; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* ── ENTITY CARDS ── */
+    .doc-header { display: flex; align-items: center; gap: 10px; }
+    .doc-header i { font-size: 24px; color: #2196F3; }
+    .entity-count { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+
+    .entity-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 12px;
+    }
+    .entity-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    .entity-name { font-size: 15px; font-weight: 600; color: #1a202c; }
+    .entity-meta { font-size: 12px; color: #a0aec0; margin-bottom: 8px; }
+    .entity-desc { font-size: 13px; color: #4a5568; line-height: 1.65; margin-bottom: 8px; }
+    .view-code   { font-size: 12px; color: #2196F3; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .view-code:hover { text-decoration: underline; }
+
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-class    { background: #EDE7F6; color: #4527A0; }
+    .badge-method   { background: #E8F5E9; color: #1B5E20; }
+    .badge-function { background: #FFF8E1; color: #E65100; }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      margin-bottom: 1.25rem;
+    }
+    .search-wrap input {
+      border: none;
+      outline: none;
+      font-size: 13px;
+      color: #2d3748;
+      flex: 1;
+      background: transparent;
+    }
+    .search-wrap i { color: #a0aec0; }
+
+    /* ── Q&A BOX ── */
+    .qa-box {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    .qa-box h3 { font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 10px; }
+    .qa-row { display: flex; gap: 8px; }
+    .qa-row input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+    .qa-row input:focus { border-color: #2196F3; }
+    .qa-btn {
+      padding: 9px 16px;
+      background: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .qa-btn:hover { background: #1976D2; }
+    .qa-answer {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f7fbff;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #2d3748;
+      line-height: 1.65;
+      display: none;
+    }
+
+    /* ── ERROR ── */
+    .error-msg {
+      background: #FFF5F5;
+      border: 1px solid #FED7D7;
+      color: #C53030;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-code"></i></div>
+    <div>
+      <h2>CodeSummarizer</h2>
+      <p>AI documentation</p>
+    </div>
+  </div>
+  <div class="nav-item active" id="nav-upload" onclick="showPage('upload')">
+    <i class="ti ti-upload"></i> Upload code
+  </div>
+  <div class="nav-item" id="nav-docs" onclick="showPage('docs')">
+    <i class="ti ti-files"></i> Projects
+    <span class="nav-badge" id="project-badge">0</span>
+  </div>
+  <div class="nav-item" id="nav-search" onclick="showPage('search')">
+    <i class="ti ti-search"></i> Search
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- UPLOAD PAGE -->
+  <div class="page active" id="page-upload">
+    <p class="page-title">Upload codebase</p>
+    <p class="page-sub">Select files to analyze and generate documentation</p>
+    <div class="card">
+      <p class="field-label" style="margin-bottom:4px">Project name</p>
+      <input class="text-input" type="text" id="proj-name" placeholder="e.g. my-python-app">
+      <p class="field-label" style="margin-bottom:8px">Code files</p>
+      <div class="dropzone" onclick="document.getElementById('fileInput').click()" id="dropzone">
+        <i class="ti ti-file-code"></i>
+        <p class="drop-main" id="drop-label">Click to upload or drag & drop</p>
+        <p class="drop-sub">Supports: Python, JavaScript, TypeScript, Java, C++, Go, Ruby, PHP</p>
+      </div>
+      <input type="file" id="fileInput" style="display:none"
+             accept=".py,.js,.ts,.java,.cpp,.c,.go,.rb,.php"
+             onchange="handleFile(this.files[0])">
+      <div id="file-list"></div>
+      <div class="error-msg" id="error-box"></div>
+      <button class="btn" id="gen-btn" onclick="generate()">
+        <i class="ti ti-sparkles"></i> Generate documentation
+      </button>
+    </div>
+    <div class="spinner" id="spinner">
+      <i class="ti ti-loader-2"></i>
+      Analyzing your code with CodeLlama... this may take a minute.
+    </div>
+  </div>
+
+  <!-- DOCS PAGE -->
+  <div class="page" id="page-docs">
+    <div class="doc-header">
+      <i class="ti ti-file-description"></i>
+      <p class="page-title">Documentation</p>
+    </div>
+    <p class="entity-count" id="entity-count">Upload a file to see results.</p>
+    <div id="entity-list"></div>
+
+    <!-- Q&A box (shown after results load) -->
+    <div class="qa-box" id="qa-box" style="display:none">
+      <h3><i class="ti ti-message-question" style="color:#2196F3"></i> Ask about this code</h3>
+      <div class="qa-row">
+        <input type="text" id="qa-input" placeholder="e.g. What does get_top_student return?">
+        <button class="qa-btn" onclick="askQuestion()">Ask</button>
+      </div>
+      <div class="qa-answer" id="qa-answer"></div>
+    </div>
+  </div>
+
+  <!-- SEARCH PAGE -->
+  <div class="page" id="page-search">
+    <p class="page-title">Search</p>
+    <p class="page-sub">Search across all documented code entities</p>
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="search-input" placeholder="Search functions, classes, methods..."
+             oninput="doSearch()">
+    </div>
+    <div id="search-results">
+      <p style="font-size:13px;color:#718096">Upload and analyze a file first to search results.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  var allEntities = [];
+  var currentCode = "";
+  var selectedFile = null;
+
+  // ── Navigation ─────────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+  }
+
+  // ── File selection ─────────────────────────────────────────
+  function handleFile(file) {
+    if (!file) return;
+    selectedFile = file;
+    var size = (file.size / 1024).toFixed(2) + ' KB';
+    document.getElementById('drop-label').textContent = '1 file selected';
+    document.getElementById('file-list').innerHTML =
+      '<div class="file-item"><i class="ti ti-file-code"></i>' + file.name +
+      '<span class="file-size">' + size + '</span></div>';
+
+    // Read code for Q&A use later
+    var reader = new FileReader();
+    reader.onload = function(e) { currentCode = e.target.result; };
+    reader.readAsText(file);
+
+    hideError();
+  }
+
+  // Drag and drop support
+  var dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.style.borderColor = '#2196F3'; });
+  dz.addEventListener('dragleave', function()  { dz.style.borderColor = ''; });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.style.borderColor = '';
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  // ── Generate docs ──────────────────────────────────────────
+  function generate() {
+    var name = document.getElementById('proj-name').value.trim();
+    if (!name)         { showError('Please enter a project name.'); return; }
+    if (!selectedFile) { showError('Please select a code file.'); return; }
+
+    hideError();
+    setLoading(true);
+
+    var formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('project_name', name);
+
+    fetch('/summarize', { method: 'POST', body: formData })
+      .then(function(res) {
+        if (!res.ok) {
+          return res.text().then(function(text) {
+            throw new Error('Server error: ' + res.status + (text ? ' - ' + text : ''));
+          });
+        }
+        return res.json();
+      })
+      .then(function(data) {
+        setLoading(false);
+        allEntities = data.entities;
+        document.getElementById('project-badge').textContent = '1';
+        renderDocs(data);
+        showPage('docs');
+      })
+      .catch(function(err) {
+        setLoading(false);
+        showError(err.message || 'Could not connect to the backend. Make sure uvicorn is running.');
+        console.error(err);
+      });
+  }
+
+  // ── Render documentation results ───────────────────────────
+  function renderDocs(data) {
+    document.getElementById('entity-count').textContent =
+      data.entity_count + ' code entities found in ' + data.filename;
+
+    document.getElementById('entity-list').innerHTML = data.entities.map(function(e) {
+      return entityCard(e);
+    }).join('');
+
+    document.getElementById('qa-box').style.display = 'block';
+  }
+
+  function entityCard(e) {
+    var badgeCls = e.type === 'class' ? 'badge-class' : e.type === 'method' ? 'badge-method' : 'badge-function';
+    return '<div class="entity-card">' +
+      '<div class="entity-top">' +
+        '<span class="entity-name">' + e.name + '</span>' +
+        '<span class="badge ' + badgeCls + '">' + e.type + '</span>' +
+      '</div>' +
+      '<p class="entity-meta">' + e.file + ' &middot; Line ' + e.line + '</p>' +
+      '<p class="entity-desc">' + e.description + '</p>' +
+      '<span class="view-code"><i class="ti ti-code"></i> View code</span>' +
+    '</div>';
+  }
+
+  // ── Q&A ────────────────────────────────────────────────────
+  function askQuestion() {
+    var q = document.getElementById('qa-input').value.trim();
+    if (!q || !currentCode) return;
+
+    var answerBox = document.getElementById('qa-answer');
+    answerBox.style.display = 'block';
+    answerBox.textContent = 'Thinking...';
+
+    fetch('/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: currentCode, question: q })
+    })
+      .then(function(res) { return res.json(); })
+      .then(function(data) { answerBox.textContent = data.answer; })
+      .catch(function()    { answerBox.textContent = 'Could not get an answer. Is the backend running?'; });
+  }
+
+  // Allow pressing Enter in Q&A input
+  document.getElementById('qa-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') askQuestion();
+  });
+
+  // ── Search ─────────────────────────────────────────────────
+  function doSearch() {
+    var q = document.getElementById('search-input').value.toLowerCase().trim();
+    var res = document.getElementById('search-results');
+
+    if (!allEntities.length) {
+      res.innerHTML = '<p style="font-size:13px;color:#718096">Upload and analyze a file first.</p>';
+      return;
+    }
+    if (!q) { res.innerHTML = ''; return; }
+
+    var matches = allEntities.filter(function(e) {
+      return e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q);
+    });
+
+    if (!matches.length) {
+      res.innerHTML = '<p style="font-size:13px;color:#718096">No results found.</p>';
+      return;
+    }
+
+    res.innerHTML = matches.map(function(e) { return entityCard(e); }).join('');
+  }
+
+  // ── Helpers ────────────────────────────────────────────────
+  function setLoading(on) {
+    document.getElementById('spinner').style.display  = on ? 'block' : 'none';
+    document.getElementById('gen-btn').disabled       = on;
+    document.querySelector('.card').style.opacity     = on ? '0.5' : '1';
+  }
+
+  function showError(msg) {
+    var box = document.getElementById('error-box');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+</script>
+</body>
+</html>
