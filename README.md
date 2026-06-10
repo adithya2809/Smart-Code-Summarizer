@@ -98,4 +98,4 @@ Adithya Vardhan
 
 GitHub: @adithya2809
 LinkedIn: [https://www.linkedin.com/in/adithya-vardhan-b040b0334/]
-Live Site: [https://adithya2809.github.io/Smart-Code-Summarizer/]
+
