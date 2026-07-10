@@ -1,4 +1,4 @@
-# Smar Code Summarizer
+# Smart Code Summarizer
 
 A simple FastAPI-based code summarization service that uses Ollama through LangChain to analyze source code and generate short descriptions for detected functions, classes, and JavaScript functions.
 
